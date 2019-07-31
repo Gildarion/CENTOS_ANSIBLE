@@ -1,0 +1,50 @@
+{
+  "variables": {
+    "iso": "http://ftp.rediris.es/mirror/CentOS/7.6.1810/isos/x86_64/CentOS-7-x86_64-Minimal-1810.iso",
+    "checksum": "38d5d51d9d100fd73df031ffd6bd8b1297ce24660dc8c13a3b8b4534a4bd291c",
+    "username": "admin",
+    "password": "p@ssw0rd"
+  },
+  "builders": [{
+      "type": "virtualbox-iso",
+      "iso_url": "{{ user `iso` }}",
+      "iso_checksum": "{{ user `checksum` }}",
+      "iso_checksum_type": "sha256",
+      "output_directory": "centos_7_x64_vbox_ansible",
+      "vm_name": "centos_ansible_base",
+      "guest_os_type": "RedHat_64",
+      "guest_additions_mode" : "upload",
+      "ssh_username": "{{ user `username` }}",
+      "ssh_password": "{{ user `password` }}",
+      "ssh_port": 22,
+      "ssh_wait_timeout": "600s",
+      "shutdown_command": "sudo systemctl poweroff",
+      "disk_size": "40000",
+      "http_directory": "http",
+      "boot_wait": "5s",
+      "boot_command": [
+         "<esc>",
+         "<wait>",
+        "linux inst.ks=http://{{ .HTTPIP }}:{{ .HTTPPort }}/ks.cfg biosdevname=0 net.ifnames=0",
+        "<enter><wait>"
+      ],
+      "vboxmanage": [
+        ["modifyvm", "{{.Name}}", "--memory", "4096"],
+        ["modifyvm", "{{.Name}}", "--cpus", "2"],
+        ["modifyvm", "{{.Name}}", "--audio", "none"]
+      ]
+   }],   
+  "provisioners": [{
+    "type": "shell",
+    "scripts": [
+      "scripts/repos.sh",
+      "scripts/vbox.sh",
+      "scripts/locale.sh"
+    ]
+  }],
+  "post-processors": [{
+    "type": "vagrant",
+    "compression_level": "6",
+    "output": "centos7_ansible.box"
+    }]
+}
